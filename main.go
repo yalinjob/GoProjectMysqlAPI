@@ -1,28 +1,40 @@
 package main
 
 import (
+	"GOLNGCOURSE/dbConnection"
 	"GOLNGCOURSE/helper"
+
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
 	//"log"
 	"net/http"
 	"time"
+	//_ "github.com/go-sql-driver/mysql"
 )
 
 var conferenceName = "Go Conference"
 
 const conferenceTickets int = 50
 
+type listOfAllEmails []listOfAllEmails
 type getAllUserList []getAllUserList
 type getAllEmailAdd []getAllEmailAdd
 
 var valideUserExsitingResult bool
 var isValidUserExsiting bool = true
+var isConnnectionIsValid bool = true
 var ifValideUserExsiting string
 var amountTicket uint
 var remainingTickets uint = 50
+
+var dbConnectionStatus bool
+var dbCreationTable bool
 var bookings = make([]UserData, 0)
+
+// Connection parameters
 
 type UserData struct {
 	firstName      string
@@ -51,38 +63,75 @@ func main() {
 
 			valideUserExsitingResult := valideUserExsiting(firstName)
 			fmt.Printf("Indication if user is exsiting   : %v\n ", valideUserExsitingResult)
+			if valideUserExsitingResult == true {
 
-			//Presenting the Ticket Amount
+				fmt.Printf("You alreday exsiting in the system\n  ")
 
-			amountTicket = bookTicket(userTickets, firstName, lastName, email)
+			} else {
 
-			fmt.Printf("The amount of ticket left  : %v\n ", amountTicket)
+				//Presenting the Ticket Amount
 
-			//Presenting the List First Name
+				amountTicket = bookTicket(userTickets, firstName, lastName, email)
 
-			firstNames := getFirstNames()
-			fmt.Printf("The first names of booking are : %v\n ", firstNames)
+				fmt.Printf("The amount of ticket left  : %v\n ", amountTicket)
 
-			//Presenting All Users
-			getAllUserList := getAllUser()
+				//Presenting the List First Name
 
-			fmt.Printf("The users are  : %v\n ", getAllUserList)
+				firstNames := getFirstNames()
+				fmt.Printf("The first names of booking are : %v\n ", firstNames)
 
-			fmt.Printf("The users from the list  are  : %v\n ", getAllUserListFromBooking())
+				//Presenting All Users
+				getAllUserList := getAllUser()
 
-			sendTicket(userTickets, firstName, lastName, email)
+				fmt.Printf("The users are  : %v\n ", getAllUserList)
 
-			//Presenting All Email User List
+				fmt.Printf("The users from the list  are  : %v\n ", getAllUserListFromBooking())
 
-			getAllEmailAdd := getAllEmail()
-			fmt.Printf("The email list  are  : %v\n ", getAllEmailAdd)
+				sendTicket(userTickets, firstName, lastName, email)
 
-			if remainingTickets == 0 {
+				//Presenting All Email User List
 
-				//end program
+				getAllEmailAdd := getAllEmail()
+				fmt.Printf("The email list  are  : %v\n ", getAllEmailAdd)
 
-				fmt.Println("Our conference is booked out .Come back next year.")
-				break
+				//Hahs256 all emailAddress
+
+				HashEmailEncerpt()
+
+				// Create a MySQL database connection string
+
+				dbUser := "root"
+				dbPass := "UziNarkis5!"
+				dbName := "GoUserList"
+				dbHost := "localhost"
+				dbPort := 3306
+
+				dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+				createTableQuery := `
+				CREATE TABLE IF NOT EXISTS users (
+					id INT AUTO_INCREMENT PRIMARY KEY,
+					firstName VARCHAR(50),
+					lastName VARCHAR(50),
+					email VARCHAR(100),
+					userTickets INT
+
+				)
+			`
+
+				dbConnectionStatus := dbConnection.DbConnectionVerification(dataSourceName, createTableQuery)
+
+				fmt.Printf("The Connection is ok  : %v\n ", dbConnectionStatus)
+
+				//Checking teh amount of ticket
+
+				if remainingTickets == 0 {
+
+					//end program
+
+					fmt.Println("Our conference is booked out .Come back next year.")
+					break
+				}
+
 			}
 
 		} else {
@@ -167,6 +216,25 @@ func getFirstNames() []string {
 
 }
 
+func HashEmailEncerpt() {
+
+	listOfAllEmails := getAllEmail()
+	hash := hashStringSHA256(listOfAllEmails)
+	fmt.Println(hash)
+}
+
+func hashStringSHA256(listOfAllEmails []string) string {
+
+	hasher := sha256.New()
+	for _, listOfAllEmails := range listOfAllEmails {
+		hasher.Write([]byte(listOfAllEmails))
+
+	}
+	hash := hex.EncodeToString(hasher.Sum(nil))
+	return hash
+
+}
+
 func getUserInput() (string, string, string, uint) {
 
 	for {
@@ -175,10 +243,10 @@ func getUserInput() (string, string, string, uint) {
 		var email string
 		var userTickets uint
 
-		fmt.Printf("Enter your First anme :")
+		fmt.Printf("Enter your First name :")
 		fmt.Scan(&firstName)
 
-		fmt.Printf("Enter your Last anme :")
+		fmt.Printf("Enter your Last name :")
 		fmt.Scan(&lastName)
 
 		fmt.Printf("Enter your email add :")
