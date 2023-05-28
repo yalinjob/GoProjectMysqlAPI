@@ -16,8 +16,10 @@ var dataSourceName string
 var dbValidConnection bool
 var createTableStatus bool
 var createTableQuery string
+var insertQuery string
+var saveUserStatus bool
 
-func DbConnectionVerification(dataSourceName string, createTableQuery string) bool {
+func DbConnectionVerification(dataSourceName string, createTableQuery string, insertQuery string, firstName string, lastName string, email string, userTickets uint) bool {
 
 	db, err := sql.Open("mysql", dataSourceName)
 	if err != nil {
@@ -38,11 +40,22 @@ func DbConnectionVerification(dataSourceName string, createTableQuery string) bo
 	_, err = db.Exec(createTableQuery)
 	if err != nil {
 		fmt.Println("Failed to create table:", err)
-		createTableStatus := true
-		return createTableStatus
+		//createTableStatus := true
+		//return createTableStatus
 
 	}
-	fmt.Println("Table created successfully!")
-	return dbValidConnection
 
+	// Prepare the statement
+	stmt, err := db.Prepare(insertQuery)
+	if err != nil {
+		dbValidConnection := false
+		return dbValidConnection
+	}
+
+	_, err = stmt.Exec(firstName, lastName, email, userTickets)
+	fmt.Println("Data inserted successfully!")
+
+	fmt.Println("Table created successfully!")
+
+	return dbValidConnection
 }

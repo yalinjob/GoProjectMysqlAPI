@@ -4,25 +4,14 @@ import (
 	"GOLNGCOURSE/dbConnection"
 	"GOLNGCOURSE/helper"
 
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
-
-	//"log"
-	"net/http"
-	"time"
-	//_ "github.com/go-sql-driver/mysql"
 )
-
-var conferenceName = "Go Conference"
-
-const conferenceTickets int = 50
 
 type listOfAllEmails []listOfAllEmails
 type getAllUserList []getAllUserList
 type getAllEmailAdd []getAllEmailAdd
 
+var conferenceTickets int = 50
 var valideUserExsitingResult bool
 var isValidUserExsiting bool = true
 var isConnnectionIsValid bool = true
@@ -32,20 +21,8 @@ var remainingTickets uint = 50
 
 var dbConnectionStatus bool
 var dbCreationTable bool
-var bookings = make([]UserData, 0)
 
 // Connection parameters
-
-type UserData struct {
-	firstName      string
-	lastName       string
-	email          string
-	numberOfTicket uint
-}
-
-var UsersData []UserData
-
-type UserEmail []UserEmail
 
 func main() {
 
@@ -54,14 +31,14 @@ func main() {
 
 	for {
 
-		firstName, lastName, email, userTickets := getUserInput()
+		firstName, lastName, email, userTickets := helper.GetUserInput()
 		isValidName, isValidEmail, isValidTicketNumber := helper.ValidateUserInput(firstName, lastName, email, userTickets, remainingTickets)
 
 		if isValidName && isValidEmail && isValidTicketNumber {
 
 			//Validation of User Exsiting
 
-			valideUserExsitingResult := valideUserExsiting(firstName)
+			valideUserExsitingResult := helper.ValideUserExsiting(firstName)
 			fmt.Printf("Indication if user is exsiting   : %v\n ", valideUserExsitingResult)
 			if valideUserExsitingResult == true {
 
@@ -71,32 +48,32 @@ func main() {
 
 				//Presenting the Ticket Amount
 
-				amountTicket = bookTicket(userTickets, firstName, lastName, email)
+				amountTicket = helper.BookTicket(userTickets, firstName, lastName, email)
 
 				fmt.Printf("The amount of ticket left  : %v\n ", amountTicket)
 
 				//Presenting the List First Name
 
-				firstNames := getFirstNames()
+				firstNames := helper.GetFirstNames()
 				fmt.Printf("The first names of booking are : %v\n ", firstNames)
 
 				//Presenting All Users
-				getAllUserList := getAllUser()
+				getAllUserList := helper.GetAllUser()
 
 				fmt.Printf("The users are  : %v\n ", getAllUserList)
 
-				fmt.Printf("The users from the list  are  : %v\n ", getAllUserListFromBooking())
+				fmt.Printf("The users from the list  are  : %v\n ", helper.GetAllUserListFromBooking())
 
-				sendTicket(userTickets, firstName, lastName, email)
+				helper.SendTicket(userTickets, firstName, lastName, email)
 
 				//Presenting All Email User List
 
-				getAllEmailAdd := getAllEmail()
+				getAllEmailAdd := helper.GetAllEmail()
 				fmt.Printf("The email list  are  : %v\n ", getAllEmailAdd)
 
 				//Hahs256 all emailAddress
 
-				HashEmailEncerpt()
+				helper.HashEmailEncerpt()
 
 				// Create a MySQL database connection string
 
@@ -107,6 +84,7 @@ func main() {
 				dbPort := 3306
 
 				dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+
 				createTableQuery := `
 				CREATE TABLE IF NOT EXISTS users (
 					id INT AUTO_INCREMENT PRIMARY KEY,
@@ -118,11 +96,12 @@ func main() {
 				)
 			`
 
-				dbConnectionStatus := dbConnection.DbConnectionVerification(dataSourceName, createTableQuery)
+				// Prepare the SQL query
+				insertQuery := ` INSERT INTO users (firstName, lastName, email,userTickets) VALUES (?, ?, ?, ?)`
+
+				dbConnectionStatus := dbConnection.DbConnectionVerification(dataSourceName, createTableQuery, insertQuery, firstName, lastName, email, userTickets)
 
 				fmt.Printf("The Connection is ok  : %v\n ", dbConnectionStatus)
-
-				//Checking teh amount of ticket
 
 				if remainingTickets == 0 {
 
@@ -162,171 +141,5 @@ func main() {
 
 		//greetUsers()
 
-	}
-}
-
-func valideUserExsiting(firstName string) bool {
-
-	listofAllName := getAllUserListFromBooking()
-
-	fmt.Printf("Testing The list  of All Name are  : %v\n ", listofAllName)
-
-	fmt.Printf("Testing The list  of firstName   : %v\n ", firstName)
-
-	for _, listofAllName := range listofAllName {
-
-		if listofAllName == firstName {
-
-			fmt.Printf("TestingAgain The list  of firstName\n   : %v\n ", firstName)
-
-			fmt.Printf("user is exsiting\n  ")
-
-			fmt.Printf("TestingAgain The list  of isValidUSerExsiting \n   : %v\n ", isValidUserExsiting)
-
-			isValidUserExsiting := true
-			return isValidUserExsiting
-
-		}
-
-	}
-
-	fmt.Printf("user isnt exsiting\n  ")
-	isValidUserExsiting := false
-	return isValidUserExsiting
-
-}
-
-func greetUsers() {
-	fmt.Printf("Welcome to %v booking application\n", conferenceName)
-	fmt.Printf("We have total of %v tickets and %v\n are still available.\n", conferenceTickets, remainingTickets)
-	fmt.Printf("Get your tickets here to attend")
-}
-
-func getFirstNames() []string {
-
-	firstNames := []string{}
-
-	for _, booking := range bookings {
-
-		firstNames = append(firstNames, booking.firstName)
-
-	}
-
-	return firstNames
-
-}
-
-func HashEmailEncerpt() {
-
-	listOfAllEmails := getAllEmail()
-	hash := hashStringSHA256(listOfAllEmails)
-	fmt.Println(hash)
-}
-
-func hashStringSHA256(listOfAllEmails []string) string {
-
-	hasher := sha256.New()
-	for _, listOfAllEmails := range listOfAllEmails {
-		hasher.Write([]byte(listOfAllEmails))
-
-	}
-	hash := hex.EncodeToString(hasher.Sum(nil))
-	return hash
-
-}
-
-func getUserInput() (string, string, string, uint) {
-
-	for {
-		var firstName string
-		var lastName string
-		var email string
-		var userTickets uint
-
-		fmt.Printf("Enter your First name :")
-		fmt.Scan(&firstName)
-
-		fmt.Printf("Enter your Last name :")
-		fmt.Scan(&lastName)
-
-		fmt.Printf("Enter your email add :")
-		fmt.Scan(&email)
-
-		fmt.Printf("Enter your of ticket  :")
-		fmt.Scan(&userTickets)
-
-		return firstName, lastName, email, userTickets
-
-	}
-}
-
-func bookTicket(userTickets uint, firstName string, lastName string, email string) uint {
-	remainingTickets = remainingTickets - userTickets
-
-	var userData = UserData{
-
-		firstName:      firstName,
-		lastName:       lastName,
-		email:          email,
-		numberOfTicket: userTickets,
-	}
-
-	bookings = append(bookings, userData)
-	fmt.Printf("list of booking is %v \n", bookings)
-
-	fmt.Printf("Thank you %v %v for booking %v tickets. You will reacive a confirantion email %v at\n", firstName, userTickets, lastName, email)
-	fmt.Printf("%v tickets remaining for %v \n", remainingTickets, conferenceName)
-	fmt.Printf("userData %v \n", bookings)
-
-	return remainingTickets
-
-}
-
-func getAllUser() []UserData {
-
-	return bookings
-}
-
-func getAllUserListFromBooking() []string {
-
-	userNameList := []string{}
-
-	for _, booking := range bookings {
-
-		userNameList = append(userNameList, booking.firstName)
-
-	}
-
-	return userNameList
-
-}
-
-func getAllEmail() []string {
-
-	UserEmail := []string{}
-
-	for _, booking := range bookings {
-
-		UserEmail = append(UserEmail, booking.email)
-
-	}
-
-	return UserEmail
-
-}
-
-func sendTicket(userTickets uint, firstName string, lastName string, email string) {
-	time.Sleep(10 * time.Second)
-	var ticket = fmt.Sprintf("%v tickets for %v %v ", userTickets, firstName, lastName)
-
-	fmt.Printf("Sending ticket %v to email address %v\n ", ticket, email)
-
-}
-
-func getUsersData(w http.ResponseWriter, r *http.Request) {
-	// Handle GET request for /products
-	if r.Method == "GET" {
-		// Encode products as JSON and write to response
-		json.NewEncoder(w).Encode(UsersData)
 	}
 }
