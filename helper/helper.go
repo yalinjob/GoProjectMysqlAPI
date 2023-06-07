@@ -3,11 +3,9 @@ package helper
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	"net/http"
 	"time"
 )
 
@@ -28,10 +26,10 @@ var isValidUserExsiting bool = true
 var bookings = make([]UserData, 0)
 
 type UserData struct {
-	firstName      string
-	lastName       string
-	email          string
-	numberOfTicket uint
+	FirstName      string
+	LastName       string
+	Email          string
+	NumberOfTicket uint
 }
 
 var UsersData []UserData
@@ -83,7 +81,7 @@ func GetAllUserListFromBooking() []string {
 
 	for _, booking := range bookings {
 
-		userNameList = append(userNameList, booking.firstName)
+		userNameList = append(userNameList, booking.FirstName)
 
 	}
 
@@ -103,7 +101,7 @@ func GetFirstNames() []string {
 
 	for _, booking := range bookings {
 
-		firstNames = append(firstNames, booking.firstName)
+		firstNames = append(firstNames, booking.FirstName)
 
 	}
 
@@ -155,17 +153,19 @@ func GetUserInput() (string, string, string, uint) {
 	}
 }
 
-func BookTicket(userTickets uint, firstName string, lastName string, email string) uint {
+func BookTicket(userTickets uint, firstName string, lastName string, email string) UserData {
+
 	remainingTickets = remainingTickets - userTickets
 
 	var userData = UserData{
 
-		firstName:      firstName,
-		lastName:       lastName,
-		email:          email,
-		numberOfTicket: userTickets,
+		FirstName:      firstName,
+		LastName:       lastName,
+		Email:          email,
+		NumberOfTicket: userTickets,
 	}
 
+	fmt.Printf("list of userData is %v \n", userData)
 	bookings = append(bookings, userData)
 	fmt.Printf("list of booking is %v \n", bookings)
 
@@ -173,7 +173,7 @@ func BookTicket(userTickets uint, firstName string, lastName string, email strin
 	fmt.Printf("%v tickets remaining for %v \n", remainingTickets, conferenceName)
 	fmt.Printf("userData %v \n", bookings)
 
-	return remainingTickets
+	return userData
 
 }
 
@@ -188,7 +188,7 @@ func GetAllEmail() []string {
 
 	for _, booking := range bookings {
 
-		UserEmail = append(UserEmail, booking.email)
+		UserEmail = append(UserEmail, booking.Email)
 
 	}
 
@@ -204,10 +204,9 @@ func SendTicket(userTickets uint, firstName string, lastName string, email strin
 
 }
 
-func GetUsersData(w http.ResponseWriter, r *http.Request) {
-	// Handle GET request for /products
-	if r.Method == "GET" {
-		// Encode products as JSON and write to response
-		json.NewEncoder(w).Encode(UsersData)
-	}
-}
+//func GetUsersData(w http.ResponseWriter, r *http.Request) {
+// Handle GET request for /products
+//	if r.Method == "GET" {
+// Encode products as JSON and write to response
+//		json.NewEncoder(w).Encode(UsersData)
+//	}

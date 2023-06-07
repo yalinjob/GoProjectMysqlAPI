@@ -3,15 +3,19 @@ package main
 import (
 	"GOLNGCOURSE/dbConnection"
 	"GOLNGCOURSE/helper"
-
 	"fmt"
+	//"log"
+	//_ "github.com/go-sql-driver/mysql"
 )
+
+var conferenceName = "Go Conference"
+
+const conferenceTickets int = 50
 
 type listOfAllEmails []listOfAllEmails
 type getAllUserList []getAllUserList
 type getAllEmailAdd []getAllEmailAdd
 
-var conferenceTickets int = 50
 var valideUserExsitingResult bool
 var isValidUserExsiting bool = true
 var isConnnectionIsValid bool = true
@@ -20,9 +24,26 @@ var amountTicket uint
 var remainingTickets uint = 50
 
 var dbConnectionStatus bool
-var dbCreationTable bool
+var bookings = make([]UserData, 0)
 
 // Connection parameters
+
+//var dbUser string
+//var doPass string
+//var dbHost string
+//var dbName string
+//var dbPort string
+
+type UserData struct {
+	firstName      string
+	lastName       string
+	email          string
+	numberOfTicket uint
+}
+
+var UsersData []UserData
+
+type UserEmail []UserEmail
 
 func main() {
 
@@ -46,11 +67,9 @@ func main() {
 
 			} else {
 
-				//Presenting the Ticket Amount
+				UserData := helper.BookTicket(userTickets, firstName, lastName, email)
 
-				amountTicket = helper.BookTicket(userTickets, firstName, lastName, email)
-
-				fmt.Printf("The amount of ticket left  : %v\n ", amountTicket)
+				fmt.Printf("The userData  : %v\n ", UserData)
 
 				//Presenting the List First Name
 
@@ -85,23 +104,10 @@ func main() {
 
 				dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 
-				createTableQuery := `
-				CREATE TABLE IF NOT EXISTS users (
-					id INT AUTO_INCREMENT PRIMARY KEY,
-					firstName VARCHAR(50),
-					lastName VARCHAR(50),
-					email VARCHAR(100),
-					userTickets INT
-
-				)
-			`
-
-				// Prepare the SQL query
-				insertQuery := ` INSERT INTO users (firstName, lastName, email,userTickets) VALUES (?, ?, ?, ?)`
-
-				dbConnectionStatus := dbConnection.DbConnectionVerification(dataSourceName, createTableQuery, insertQuery, firstName, lastName, email, userTickets)
-
+				dbConnectionStatus := dbConnection.DbConnectionVerification(dataSourceName, UserData)
 				fmt.Printf("The Connection is ok  : %v\n ", dbConnectionStatus)
+
+				//Checking teh amount of ticket
 
 				if remainingTickets == 0 {
 
@@ -112,7 +118,6 @@ func main() {
 				}
 
 			}
-
 		} else {
 
 			if !isValidName {

@@ -1,17 +1,13 @@
 package dbConnection
 
 import (
+	"GOLNGCOURSE/helper"
 	"database/sql"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var dbUser string
-var doPass string
-var dbHost string
-var dbName string
-var dbPort string
 var dataSourceName string
 var dbValidConnection bool
 var createTableStatus bool
@@ -19,7 +15,7 @@ var createTableQuery string
 var insertQuery string
 var saveUserStatus bool
 
-func DbConnectionVerification(dataSourceName string, createTableQuery string, insertQuery string, firstName string, lastName string, email string, userTickets uint) bool {
+func DbConnectionVerification(dataSourceName string, userData helper.UserData) bool {
 
 	db, err := sql.Open("mysql", dataSourceName)
 	if err != nil {
@@ -37,6 +33,16 @@ func DbConnectionVerification(dataSourceName string, createTableQuery string, in
 
 	dbValidConnection := true
 
+	createTableQuery := `
+				CREATE TABLE IF NOT EXISTS users (
+					id INT AUTO_INCREMENT PRIMARY KEY,
+					first_name VARCHAR(50),
+					last_name VARCHAR(50),
+					email VARCHAR(100),
+					number_of_ticket INT
+
+				) `
+
 	_, err = db.Exec(createTableQuery)
 	if err != nil {
 		fmt.Println("Failed to create table:", err)
@@ -44,18 +50,30 @@ func DbConnectionVerification(dataSourceName string, createTableQuery string, in
 		//return createTableStatus
 
 	}
+	fmt.Println("Data inserted successfullyfirst point!")
+	// Prepare the SQL query
+	//insertQuery := ` INSERT INTO users (firstName, lastName, email,userTickets) VALUES (?, ?, ?, ?)`
+
+	query := "INSERT INTO users (first_name, last_name, email, number_of_ticket) VALUES (?, ?, ?, ?)"
 
 	// Prepare the statement
-	stmt, err := db.Prepare(insertQuery)
+	stmt, err := db.Prepare(query)
 	if err != nil {
 		dbValidConnection := false
 		return dbValidConnection
+
 	}
 
-	_, err = stmt.Exec(firstName, lastName, email, userTickets)
-	fmt.Println("Data inserted successfully!")
+	defer stmt.Close()
+
+	fmt.Println("Data inserted successfullySecond point!")
+	//_, err = stmt.Exec(firstName, lastName, email, userTickets)
+
+	_, err = stmt.Exec(userData.FirstName, userData.LastName, userData.Email, userData.NumberOfTicket)
+	fmt.Println("Data inserted successfullyLast!")
 
 	fmt.Println("Table created successfully!")
 
 	return dbValidConnection
+
 }
