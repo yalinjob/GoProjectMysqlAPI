@@ -1,11 +1,17 @@
 package main
 
 import (
-	"GOLNGCOURSE/dbConnection"
-	"GOLNGCOURSE/helper"
+	routes "GOLNGCOURSE/Routes"
+	//"GOLNGCOURSE/dbConnection"
+
 	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+	//"githb.com/gorilla/mux"
 	//"log"
-	//_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 var conferenceName = "Go Conference"
@@ -24,7 +30,8 @@ var amountTicket uint
 var remainingTickets uint = 50
 
 var dbConnectionStatus bool
-var bookings = make([]UserData, 0)
+
+//var bookings = make([]UserData, 0)
 
 // Connection parameters
 
@@ -34,117 +41,121 @@ var bookings = make([]UserData, 0)
 //var dbName string
 //var dbPort string
 
-type UserData struct {
-	firstName      string
-	lastName       string
-	email          string
-	numberOfTicket uint
-}
+//type UserData struct {
+//firstName      string
+//lastName       string
+///	numberOfTicket uint
+//}
 
-var UsersData []UserData
+//var UsersData []UserData
 
-type UserEmail []UserEmail
+//type UserEmail []UserEmail
 
 func main() {
 
 	fmt.Printf("We have total of %v tickets and %v\n are still available.\n", conferenceTickets, remainingTickets)
 	fmt.Printf("Get your tickets here to attend")
 
-	for {
+	//for {
 
-		firstName, lastName, email, userTickets := helper.GetUserInput()
-		isValidName, isValidEmail, isValidTicketNumber := helper.ValidateUserInput(firstName, lastName, email, userTickets, remainingTickets)
+	//firstName, lastName, email, userTickets := helper.GetUserInput()
+	//isValidName, isValidEmail, isValidTicketNumber := helper.ValidateUserInput(firstName, lastName, email, userTickets, remainingTickets)
 
-		if isValidName && isValidEmail && isValidTicketNumber {
+	r := mux.NewRouter()
+	routes.RegisterUserRoutes(r)
+	http.Handle("/", r)
+	log.Fatal(http.ListenAndServe("localhost:9010", r))
 
-			//Validation of User Exsiting
+	//if isValidName && isValidEmail && isValidTicketNumber {
 
-			valideUserExsitingResult := helper.ValideUserExsiting(firstName)
-			fmt.Printf("Indication if user is exsiting   : %v\n ", valideUserExsitingResult)
-			if valideUserExsitingResult == true {
+	//Validation of User Exsiting
 
-				fmt.Printf("You alreday exsiting in the system\n  ")
+	//valideUserExsitingResult := helper.ValideUserExsiting(firstName)
+	//fmt.Printf("Indication if user is exsiting   : %v\n ", valideUserExsitingResult)
+	//if valideUserExsitingResult == true {
 
-			} else {
+	//	fmt.Printf("You alreday exsiting in the system\n  ")
 
-				UserData := helper.BookTicket(userTickets, firstName, lastName, email)
+	//} else {
 
-				fmt.Printf("The userData  : %v\n ", UserData)
+	//	UserData := helper.BookTicket(userTickets, firstName, lastName, email)
 
-				//Presenting the List First Name
+	//	fmt.Printf("The userData  : %v\n ", UserData)
 
-				firstNames := helper.GetFirstNames()
-				fmt.Printf("The first names of booking are : %v\n ", firstNames)
+	//Presenting the List First Name
 
-				//Presenting All Users
-				getAllUserList := helper.GetAllUser()
+	//	firstNames := helper.GetFirstNames()
+	//	fmt.Printf("The first names of booking are : %v\n ", firstNames)
 
-				fmt.Printf("The users are  : %v\n ", getAllUserList)
+	//Presenting All Users
+	//	getAllUserList := helper.GetAllUser()
 
-				fmt.Printf("The users from the list  are  : %v\n ", helper.GetAllUserListFromBooking())
+	//	fmt.Printf("The users are  : %v\n ", getAllUserList)
 
-				helper.SendTicket(userTickets, firstName, lastName, email)
+	//	fmt.Printf("The users from the list  are  : %v\n ", helper.GetAllUserListFromBooking())
 
-				//Presenting All Email User List
+	//	helper.SendTicket(userTickets, firstName, lastName, email)
 
-				getAllEmailAdd := helper.GetAllEmail()
-				fmt.Printf("The email list  are  : %v\n ", getAllEmailAdd)
+	//Presenting All Email User List
 
-				//Hahs256 all emailAddress
+	//	getAllEmailAdd := helper.GetAllEmail()
+	//	fmt.Printf("The email list  are  : %v\n ", getAllEmailAdd)
 
-				helper.HashEmailEncerpt()
+	//Hahs256 all emailAddress
 
-				// Create a MySQL database connection string
+	//	helper.HashEmailEncerpt()
 
-				dbUser := "root"
-				dbPass := "UziNarkis5!"
-				dbName := "GoUserList"
-				dbHost := "localhost"
-				dbPort := 3306
+	// Create a MySQL database connection string
 
-				dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+	//	dbUser := "root"
+	//	dbPass := "UziNarkis5!"
+	//	dbName := "GoUserList"
+	//	dbHost := "localhost"
+	//	dbPort := 3306
 
-				dbConnectionStatus := dbConnection.DbConnectionVerification(dataSourceName, UserData)
-				fmt.Printf("The Connection is ok  : %v\n ", dbConnectionStatus)
+	//	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 
-				//Checking teh amount of ticket
+	//	dbConnectionStatus := helper.DbConnectionVerification(dataSourceName)
 
-				if remainingTickets == 0 {
+	//Checking teh amount of ticket
 
-					//end program
+	//	if remainingTickets == 0 {
 
-					fmt.Println("Our conference is booked out .Come back next year.")
-					break
-				}
+	//end program
 
-			}
-		} else {
+	//		fmt.Println("Our conference is booked out .Come back next year.")
+	//		break
+	//				}
 
-			if !isValidName {
-				fmt.Printf("First ane or last Name is short , please fill out again ")
+	//			}
+	//		} else {
 
-			}
-			if !isValidEmail {
-				fmt.Printf("The email you entered isnt correct  ")
+	//			if !isValidName {
+	//				fmt.Printf("First ane or last Name is short , please fill out again ")
 
-			}
+	//			}
+	//			if !isValidEmail {
+	//				fmt.Printf("The email you entered isnt correct  ")
 
-			if !isValidTicketNumber {
-				fmt.Printf("The amount of ticet is incorrect  ")
+	//			}
 
-			}
+	//			if !isValidTicketNumber {
+	//				fmt.Printf("The amount of ticet is incorrect  ")
 
-			fmt.Printf("Your input data is invalid , try again ")
-			//adding the option to continur the programing
-		}
+	//			}
 
-		// Define routes
-		//http.HandleFunc("/UsersData", getUsersData)
+	//			fmt.Printf("Your input data is invalid , try again ")
+	//adding the option to continur the programing
+	//		}
 
-		// Start server
-		//log.Fatal(http.ListenAndServe(":8090", nil))
+	// Define routes
+	//http.HandleFunc("/UsersData", getUsersData)
 
-		//greetUsers()
+	// Start server
+	//log.Fatal(http.ListenAndServe(":8090", nil))
 
-	}
+	//greetUsers()
+
+	//	}
+	//}
 }

@@ -1,10 +1,10 @@
 package dbConfig
 
 import (
-	"database/sql"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 var dbUser string
@@ -15,27 +15,36 @@ var dbPort string
 var dataSourceName string
 var dbValidConnection bool
 
+var (
+	db *gorm.DB
+)
+
 // Create a MySQL database connection string
 
 //dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 
 // Open a connection to the MySQL database
-func dbConnectionVerification(dataSourceName string) bool {
 
-	db, err := sql.Open("mysql", dataSourceName)
+func DbConnectionVerification() {
+
+	//dbUser := "root"
+	//dbPass := "UziNarkis5!"
+	//dbName := "GoUserList"
+	//dbHost := "localhost"
+	//dbPort := 3306
+
+	//dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+
+	d, err := gorm.Open("mysql", "root:UziNarkis5!@tcp(localhost:3306)/GoUserList?charset=utf8&parseTime=True&loc=Local")
+
 	if err != nil {
 		panic(err.Error())
 	}
-	defer db.Close()
 
-	// Attempt to ping the database to verify the connection
-	err = db.Ping()
-	if err != nil {
-		panic(err.Error())
-	}
-
+	db = d
 	fmt.Println("Successfully connected to the MySQL database!")
 
-	dbValidConnection := true
-	return dbValidConnection
+}
+func GetDB() *gorm.DB {
+	return db
 }
