@@ -30,7 +30,8 @@ var db *gorm.DB
 
 type UserData struct {
 	gorm.Model
-	FirstName      string `gorm: "" json:"FirstName" `
+	FirstName string `json:"FirstName" `
+	//FirstName      string `gorm: "" json:"FirstName" `
 	LastName       string `json:"LastName" `
 	Email          string `json:"Email" `
 	NumberOfTicket uint   `json:"NumberOfTicket" `
@@ -240,6 +241,14 @@ func init() {
 
 }
 
+func GetUserByID(Id int64) (*UserData, *gorm.DB) {
+
+	var getUserById UserData
+	db := db.Where("id=? ", Id).Find(&getUserById)
+	return &getUserById, db
+
+}
+
 func (ud *UserData) CreateUser() *UserData {
 
 	db.NewRecord(ud)
@@ -253,5 +262,13 @@ func GetAllUser() []UserData {
 	var UserDatas []UserData
 	db.Find(&UserDatas)
 	return UserDatas
+
+}
+
+func DeleteUser(ID int64) UserData {
+
+	var userData UserData
+	db.Where("ID=?", ID).Delete(userData)
+	return userData
 
 }
